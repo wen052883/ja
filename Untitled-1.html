@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古代漢語語法挑戰：判斷句 vs 描述句</title>
+    <style>
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f4f5f7;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+        .progress {
+            text-align: right;
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 20px;
+        }
+        .question-box {
+            background-color: #f8fafc;
+            border-left: 5px solid #3182ce;
+            padding: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 0 8px 8px 0;
+            color: #1a202c;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        button {
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background-color: #edf2f7;
+            border-color: #a0aec0;
+        }
+        button.judge-btn {
+            color: #c53030;
+            border-color: #feb2b2;
+        }
+        button.judge-btn:hover {
+            background-color: #fff5f5;
+        }
+        button.desc-btn {
+            color: #2b6cb0;
+            border-color: #bee3f8;
+        }
+        button.desc-btn:hover {
+            background-color: #ebf8ff;
+        }
+        .feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .correct {
+            background-color: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        .wrong {
+            background-color: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+        .next-btn {
+            width: 100%;
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            display: none;
+        }
+        .next-btn:hover {
+            background-color: #2d3748;
+        }
+        .result-box {
+            text-align: center;
+            display: none;
+        }
+        .result-score {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2b6cb0;
+            margin: 20px 0;
+        }
+        .restart-btn {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            width: 100%;
+        }
+        .restart-btn:hover {
+            background-color: #2b6cb0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 遊戲主體 -->
+    <div id="game-inner">
+        <h1>古代漢語句型挑戰賽</h1>
+        <div class="progress" id="progress">題目：1 / 5</div>
+        
+        <div class="question-box" id="question-text">
+            加載中...
+        </div>
+        
+        <div class="options" id="options-container">
+            <button class="judge-btn" onclick="checkAnswer('判斷句')">判斷句</button>
+            <button class="desc-btn" onclick="checkAnswer('描述句')">描述句</button>
+        </div>
+        
+        <div class="feedback" id="feedback-box"></div>
+        
+        <button class="next-btn" id="next-button" onclick="nextQuestion()">下一題</button>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div class="result-box" id="result-box">
+        <h1>測驗結束！</h1>
+        <p>你的最終得分是：</p>
+        <div class="result-score" id="score-display">0</div>
+        <p id="result-evaluation"></p>
+        <button class="restart-btn" onclick="restartGame()">重新挑戰</button>
+    </div>
+</div>
+
+<script>
+    // 基於《古代漢語.jpg》定義所設計的純文言門檻題庫
+    const questions = [
+        {
+            text: "「廉頗者，趙之良將也。」",
+            answer: "判斷句",
+            explain: "這是最標準的「……者，……也」格式！用來界定主語（廉頗）的身分是「趙之良將」，屬於 A 是 B 的關係。"
+        },
+        {
+            text: "「天寒地凍。」",
+            answer: "描述句",
+            explain: "這正是圖檔中的經典範例！形容詞直接作謂語，用來描寫環境的「狀態與特徵」，而非下定義。"
+        },
+        {
+            text: "「此非孟德之困於周郎者乎？」",
+            answer: "判斷句",
+            explain: "使用了「非……」的否定判斷形式，用來界定這個地方「是不是」當年曹操被周瑜圍困之處。"
+        },
+        {
+            text: "「林木茂密，山谷幽深。」",
+            answer: "描述句",
+            explain: "句子中的「茂密」與「幽深」是形容詞直接作謂語，負責描寫景物的特徵，完全不需要「是」字。"
+        },
+        {
+            text: "「陳勝者，陽城人也。」",
+            answer: "判斷句",
+            explain: "符合「……者，……也」的最具代表性格式，界定了陳勝的身分與類別（陽城人）。"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    function loadQuestion() {
+        const q = questions[currentQuestionIndex];
+        document.getElementById("question-text").innerText = q.text;
+        document.getElementById("progress").innerText = `題目：${currentQuestionIndex + 1} / ${questions.length}`;
+        
+        // 重置狀態
+        document.getElementById("feedback-box").style.display = "none";
+        document.getElementById("next-button").style.display = "none";
+        toggleButtons(true);
+    }
+
+    function checkAnswer(userChoice) {
+        toggleButtons(false);
+        const q = questions[currentQuestionIndex];
+        const feedbackBox = document.getElementById("feedback-box");
+        
+        if (userChoice === q.answer) {
+            score += 20;
+            feedbackBox.className = "feedback correct";
+            feedbackBox.innerHTML = `<strong>⭕ 正確！</strong><br>${q.explain}`;
+        } else {
+            feedbackBox.className = "feedback wrong";
+            feedbackBox.innerHTML = `<strong>❌ 殘念！這題是【${q.answer}】</strong><br>${q.explain}`;
+        }
+        
+        feedbackBox.style.display = "block";
+        document.getElementById("next-button").style.display = "block";
+    }
+
+    function toggleButtons(enable) {
+        const buttons = document.querySelectorAll(".options button");
+        buttons.forEach(btn => btn.disabled = !enable);
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById("game-inner").style.display = "none";
+        document.getElementById("result-box").style.display = "block";
+        document.getElementById("score-display").innerText = score;
+        
+        let evalText = "";
+        if (score === 100) evalText = "太厲害了！你已經完全掌握了古代漢語的判斷句與描述句！";
+        else if (score >= 60) evalText = "很棒！對這兩種句型有不錯的語感，再接再厲！";
+        else evalText = "別灰心，再對照一下《古代漢語.jpg》的公式特徵，重新挑戰試試看！";
+        
+        document.getElementById("result-evaluation").innerText = evalText;
+    }
+
+    function restartGame() {
+        currentQuestionIndex = 0;
+        score = 0;
+        document.getElementById("game-inner").style.display = "block";
+        document.getElementById("result-box").style.display = "none";
+        loadQuestion();
+    }
+
+    // 初始化遊戲
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>
